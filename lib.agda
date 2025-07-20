@@ -24,12 +24,26 @@ open & public
 record Unit : Set where
   constructor ★
 
+open Unit public
+
 record ⊤ : Prop where
   constructor tt
+
+record Unit₁ : Set₁ where
+  constructor ★₁
+
+open Unit₁ public
+
+record ⊤₁ : Prop₁ where
+  constructor tt₁
 
 data Empty : Set where
 
 data ⊥ : Prop where
+
+data Empty₁ : Set₁ where
+
+data ⊥₁ : Prop₁ where
 
 data ℕ : Set where
   zero : ℕ
@@ -37,6 +51,13 @@ data ℕ : Set where
 
 data _≡_ {ℓ : Level} {A : Set ℓ} (a : A) : A → Prop ℓ where
   refl : a ≡ a
+
+record Lift₁ (A : Set) : Set₁ where
+  constructor mkLift₁
+  field
+    lift₁ : A
+
+open Lift₁ public
 
 postulate transp : {ℓ₁ ℓ₂ : Level} {A : Set ℓ₁} {a : A} (P : A → Set ℓ₂) {b : A} (e : a ≡ b) (t : P a) → P b
 postulate transpᵢ : {ℓ₁ ℓ₂ : Level} {A : Set ℓ₁} {a : A} (P : A → Prop ℓ₂) {b : A} (e : a ≡ b) (t : P a) → P b

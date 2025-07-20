@@ -107,23 +107,23 @@ El-eq (cEmb P) (cΣ B Bu Q Qu) a b = Empty
 El-eq (cEmb P) cℕ a b = Empty
 El-eq (cEmb P) (cEmb Q) a b = Unit
 
-U-eq : {A : Set} (Au : inU A) {B : Set} (Bu : inU B) → Set
+U-eq : {A : Set} (Au : inU A) {B : Set} (Bu : inU B) → Set₁
 U-eq (cΠ A Au P Pu) (cΠ B Bu Q Qu) = (a : SetoidPt A) (b : SetoidPt B) → El-eq Au Bu (a .p-el) (b .p-el) → U-eq (Pu a) (Qu b)
-U-eq (cΠ A Au P Pu) (cΣ B Bu Q Qu) = Empty
-U-eq (cΠ A Au P Pu) cℕ = Empty
-U-eq (cΠ A Au P Pu) (cEmb Q) = Empty
-U-eq (cΣ A Au P Pu) (cΠ B Bu Q Qu) = Empty
+U-eq (cΠ A Au P Pu) (cΣ B Bu Q Qu) = Empty₁
+U-eq (cΠ A Au P Pu) cℕ = Empty₁
+U-eq (cΠ A Au P Pu) (cEmb Q) = Empty₁
+U-eq (cΣ A Au P Pu) (cΠ B Bu Q Qu) = Empty₁
 U-eq (cΣ A Au P Pu) (cΣ B Bu Q Qu) = (a : SetoidPt A) (b : SetoidPt B) → El-eq Au Bu (a .p-el) (b .p-el) → U-eq (Pu a) (Qu b)
-U-eq (cΣ A Au P Pu) cℕ = Empty
-U-eq (cΣ A Au P Pu) (cEmb Q) = Empty
-U-eq cℕ (cΠ A Bu P Pu) = Empty
-U-eq cℕ (cΣ A Bu P Pu) = Empty
-U-eq cℕ cℕ = Unit
-U-eq cℕ (cEmb P) = Empty
-U-eq (cEmb P) (cΠ B Bu Q Qu) = Empty
-U-eq (cEmb P) (cΣ B Bu Q Qu) = Empty
-U-eq (cEmb P) cℕ = Empty
-U-eq (cEmb P) (cEmb Q) = P ↔ Q
+U-eq (cΣ A Au P Pu) cℕ = Empty₁
+U-eq (cΣ A Au P Pu) (cEmb Q) = Empty₁
+U-eq cℕ (cΠ A Bu P Pu) = Empty₁
+U-eq cℕ (cΣ A Bu P Pu) = Empty₁
+U-eq cℕ cℕ = Unit₁
+U-eq cℕ (cEmb P) = Empty₁
+U-eq (cEmb P) (cΠ B Bu Q Qu) = Empty₁
+U-eq (cEmb P) (cΣ B Bu Q Qu) = Empty₁
+U-eq (cEmb P) cℕ = Empty₁
+U-eq (cEmb P) (cEmb Q) = Lift₁ (P ↔ Q)
 
 data inU₂ : (A : Set) (Au : inU A) → Set₁ where
   c₂Π : (A : Set) (Au : inU A) (Ar : (a : A) → El-eq Au Au a a → Prop) (Av : inU₂ A Au)
@@ -145,18 +145,18 @@ El-refl (c₂Σ A Au Ar Av P Pu Pr Pv) a ae = & (a .fst .p-rel ≡ ae .fst) (λ 
 El-refl c₂ℕ a ae = ⊤
 El-refl (c₂Emb P) a ae = ⊤
 
-U-refl : {A : Set} {Au : inU A} (Av : inU₂ A Au) → U-eq Au Au → Prop
+U-refl : {A : Set} {Au : inU A} (Av : inU₂ A Au) → U-eq Au Au → Prop₁
 U-refl (c₂Π A Au Ar Av P Pu Pr Pv) e = (a : SetoidPt (mkSetoid A (El-eq Au Au) Ar)) → U-refl (Pv a) (e a a (a .p-rel))
 U-refl (c₂Σ A Au Ar Av P Pu Pr Pv) e = (a : SetoidPt (mkSetoid A (El-eq Au Au) Ar)) → U-refl (Pv a) (e a a (a .p-rel))
-U-refl c₂ℕ e = ⊤
-U-refl (c₂Emb P) e = e ≡ equiv-refl P
+U-refl c₂ℕ e = ⊤₁
+U-refl (c₂Emb P) e = e ≡ mkLift₁ (equiv-refl P)
 
 data inU₃ : (A : Set) (Au : inU A) (Av : inU₂ A Au) → Set₁ where
   c₃Π : (A : Set) (Au : inU A) (Av : inU₂ A Au) (Aw : inU₃ A Au Av)
         (P : (a : SetoidPt (mkSetoid A (El-eq Au Au) (El-refl Av))) → Set) (Pu : (a : SetoidPt (mkSetoid A (El-eq Au Au) (El-refl Av))) → inU (P a))
         (Pv : (a : SetoidPt (mkSetoid A (El-eq Au Au) (El-refl Av))) → inU₂ (P a) (Pu a))
         (Pw : (a : SetoidPt (mkSetoid A (El-eq Au Au) (El-refl Av))) → inU₃ (P a) (Pu a) (Pv a))
-        (P-rel : (a b : SetoidPt (mkSetoid A (El-eq Au Au) (El-refl Av))) (e : El-eq Au Au (a .p-el) (b .p-el)) → U-eq (Pu a) (Pu a))
+        (P-rel : (a b : SetoidPt (mkSetoid A (El-eq Au Au) (El-refl Av))) (e : El-eq Au Au (a .p-el) (b .p-el)) → U-eq (Pu a) (Pu b))
         (P-refl : (a : SetoidPt (mkSetoid A (El-eq Au Au) (El-refl Av))) → U-refl (Pv a) (P-rel a a (a .p-rel)))
         → inU₃ ((a : SetoidPt (mkSetoid A (El-eq Au Au) (El-refl Av))) → P a)
                (cΠ (mkSetoid A (El-eq Au Au) (El-refl Av)) Au (MkDepSetoid P (λ a p b q → El-eq (Pu a) (Pu b) p q) (λ a p e → El-refl (Pv a) p e)) Pu)
@@ -165,7 +165,7 @@ data inU₃ : (A : Set) (Au : inU A) (Av : inU₂ A Au) → Set₁ where
         (P : (a : SetoidPt (mkSetoid A (El-eq Au Au) (El-refl Av))) → Set) (Pu : (a : SetoidPt (mkSetoid A (El-eq Au Au) (El-refl Av))) → inU (P a))
         (Pv : (a : SetoidPt (mkSetoid A (El-eq Au Au) (El-refl Av))) → inU₂ (P a) (Pu a))
         (Pw : (a : SetoidPt (mkSetoid A (El-eq Au Au) (El-refl Av))) → inU₃ (P a) (Pu a) (Pv a))
-        (P-rel : (a b : SetoidPt (mkSetoid A (El-eq Au Au) (El-refl Av))) (e : El-eq Au Au (a .p-el) (b .p-el)) → U-eq (Pu a) (Pu a))
+        (P-rel : (a b : SetoidPt (mkSetoid A (El-eq Au Au) (El-refl Av))) (e : El-eq Au Au (a .p-el) (b .p-el)) → U-eq (Pu a) (Pu b))
         (P-refl : (a : SetoidPt (mkSetoid A (El-eq Au Au) (El-refl Av))) → U-refl (Pv a) (P-rel a a (a .p-rel)))
         → inU₃ (Σ (SetoidPt (mkSetoid A (El-eq Au Au) (El-refl Av))) P)
                (cΣ (mkSetoid A (El-eq Au Au) (El-refl Av)) Au (MkDepSetoid P (λ a p b q → El-eq (Pu a) (Pu b) p q) (λ a p e → El-refl (Pv a) p e)) Pu)
@@ -173,4 +173,56 @@ data inU₃ : (A : Set) (Au : inU A) (Av : inU₂ A Au) → Set₁ where
   c₃ℕ : inU₃ ℕ cℕ c₂ℕ
   c₃Emb : (P : Set) → inU₃ P (cEmb P) (c₂Emb P)
 
+record U-el : Set₁ where
+  constructor mkU
+  field
+    U-set : Set
+    U-inU : inU U-set
+    U-inU₂ : inU₂ U-set U-inU
+    U-inU₃ : inU₃ U-set U-inU U-inU₂
 
+open U-el
+
+U : Setoid (lsuc lzero)
+U .s-el = U-el
+U .s-rel A B = U-eq (A .U-inU) (B .U-inU)
+U .s-refl A Ae = U-refl (A .U-inU₂) Ae
+
+El : DepSetoid U lzero
+El .d-el A = A .p-el .U-set
+El .d-rel A a B b = El-eq (A .p-el .U-inU) (B .p-el .U-inU) a b
+El .d-refl A a ae = El-refl (A .p-el .U-inU₂) a ae
+
+ℕᵤ : SetoidPt U
+ℕᵤ .p-el = mkU ℕ cℕ c₂ℕ c₃ℕ
+ℕᵤ .p-rel = ★₁
+ℕᵤ .p-refl = tt₁
+
+Embᵤ : (P : Set) → SetoidPt U
+Embᵤ P .p-el = mkU P (cEmb P) (c₂Emb P) (c₃Emb P)
+Embᵤ P .p-rel = mkLift₁ (equiv-refl P)
+Embᵤ P .p-refl = refl
+
+Πᵤ-el : (A : SetoidPt U) (P : SetoidMorphism (fiber U El A) U) → U .s-el
+Πᵤ-el A P = mkU _ _ _ (c₃Π (A .p-el .U-set) (A .p-el .U-inU) (A .p-el .U-inU₂) (A .p-el .U-inU₃) (λ a → P .m-el a .U-set)
+                           (λ a → P .m-el a .U-inU) (λ a → P .m-el a .U-inU₂) (λ a → P .m-el a .U-inU₃) (λ a b e → P .m-rel a b e) (λ a → P .m-refl a)) 
+
+Πᵤ-rel : (A₀ A₁ : SetoidPt U) (Ae : SetoidEq A₀ A₁) (P₀ : SetoidMorphism (fiber U El A₀) U) (P₁ : SetoidMorphism (fiber U El A₁) U)
+         (Pe : (a₀ : SetoidPt (fiber U El A₀)) (a₁ : SetoidPt (fiber U El A₁)) (ae : El .d-rel A₀ (a₀ .p-el) A₁ (a₁ .p-el)) → U .s-rel (P₀ .m-el a₀) (P₁ .m-el a₁))
+         → U .s-rel (Πᵤ-el A₀ P₀) (Πᵤ-el A₁ P₁)
+Πᵤ-rel A₀ A₁ Ae P₀ P₁ Pe = Pe
+
+Πᵤ-refl : (A : SetoidPt U) (P : SetoidMorphism (fiber U El A) U) → U .s-refl (Πᵤ-el A P) (Πᵤ-rel A A (A .p-rel) P P (λ a₀ a₁ ae → P .m-rel a₀ a₁ ae))
+Πᵤ-refl A P = λ a → P .m-refl a
+
+Σᵤ-el : (A : SetoidPt U) (P : SetoidMorphism (fiber U El A) U) → U .s-el
+Σᵤ-el A P = mkU _ _ _ (c₃Σ (A .p-el .U-set) (A .p-el .U-inU) (A .p-el .U-inU₂) (A .p-el .U-inU₃) (λ a → P .m-el a .U-set)
+                           (λ a → P .m-el a .U-inU) (λ a → P .m-el a .U-inU₂) (λ a → P .m-el a .U-inU₃) (λ a b e → P .m-rel a b e) (λ a → P .m-refl a)) 
+
+Σᵤ-rel : (A₀ A₁ : SetoidPt U) (Ae : SetoidEq A₀ A₁) (P₀ : SetoidMorphism (fiber U El A₀) U) (P₁ : SetoidMorphism (fiber U El A₁) U)
+         (Pe : (a₀ : SetoidPt (fiber U El A₀)) (a₁ : SetoidPt (fiber U El A₁)) (ae : El .d-rel A₀ (a₀ .p-el) A₁ (a₁ .p-el)) → U .s-rel (P₀ .m-el a₀) (P₁ .m-el a₁))
+         → U .s-rel (Σᵤ-el A₀ P₀) (Σᵤ-el A₁ P₁)
+Σᵤ-rel A₀ A₁ Ae P₀ P₁ Pe = Pe
+
+Σᵤ-refl : (A : SetoidPt U) (P : SetoidMorphism (fiber U El A) U) → U .s-refl (Σᵤ-el A P) (Σᵤ-rel A A (A .p-rel) P P (λ a₀ a₁ ae → P .m-rel a₀ a₁ ae))
+Σᵤ-refl A P = λ a → P .m-refl a
