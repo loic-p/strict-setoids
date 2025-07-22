@@ -15,6 +15,7 @@ record Σ {ℓ₁ ℓ₂ : Level} (A : Set ℓ₁) (P : A → Set ℓ₂) : Set 
 open Σ public
 
 record & {ℓ₁ ℓ₂ : Level} (A : Prop ℓ₁) (P : A → Prop ℓ₂) : Prop (ℓ₁ ⊔ ℓ₂) where
+  constructor mk&
   field
     fst : A
     snd : P fst
