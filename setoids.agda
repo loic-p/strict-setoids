@@ -265,6 +265,14 @@ Embᵤ P .p-refl = refl
 Σᵤ : (A : SetoidPt U) (P : SetoidMorphism (El A) U) → SetoidPt U
 Σᵤ A P = mkPt (Σᵤ-el A P) (Σᵤ-rel A A (A .p-rel) P P (P .m-rel)) (Σᵤ-refl A P)
 
+correctPair : (A : SetoidPt U) (P : SetoidMorphism (El A) U) (x : SetoidPt (El (Σᵤ A P))) → SetoidPt (El (Σᵤ A P))
+correctPair A P x = mkPt (x .p-el) (mkΣ (x .p-el .fst .p-rel) (x .p-rel .snd)) (mk& refl (x .p-refl .snd))
+
+Σᵤ-lemma : (A : SetoidPt U) (P : SetoidMorphism (El A) U) (x : SetoidPt (El (Σᵤ A P)))
+           → correctPair A P x ≡ x
+Σᵤ-lemma A P x = SetoidPt-eq₂ (El (Σᵤ A P)) (transpᵢ (λ X → mkΣ (x .p-el .fst .p-rel) (x .p-rel .snd) ≡ mkΣ X (x .p-rel .snd)) (x .p-refl .fst) refl)
+                              (mk& refl (x .p-refl .snd)) (x .p-refl)
+
 -- first projection
 
 Σᵤ-fst-el : (A : SetoidPt U) (P : SetoidMorphism (El A) U) (x : SetoidPt (El (Σᵤ A P))) → El A .s-el

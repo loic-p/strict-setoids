@@ -84,8 +84,19 @@ data nateq : ℕ → ℕ → Set where
   nateq-zero : nateq zero zero
   nateq-suc : {n m : ℕ} → nateq n m → nateq (suc n) (suc m)
 
+nateq-refl : (n : ℕ) → nateq n n
+nateq-refl zero = nateq-zero
+nateq-refl (suc n) = nateq-suc (nateq-refl n)
+
+nateq-sym : {n m : ℕ} → nateq n m → nateq m n
+nateq-sym nateq-zero = nateq-zero
+nateq-sym (nateq-suc e) = nateq-suc (nateq-sym e)
+
 _↔_ : {ℓ₁ ℓ₂ : Level} (P : Set ℓ₁) (Q : Set ℓ₂) → Set (ℓ₁ ⊔ ℓ₂)
 P ↔ Q = Σ (P → Q) (λ _ → Q → P)
 
 equiv-refl : {ℓ : Level} (P : Set ℓ) → P ↔ P
 equiv-refl P = mkΣ (λ x → x) (λ x → x)
+
+equiv-sym : {ℓ : Level} {P Q : Set ℓ} → P ↔ Q → Q ↔ P
+equiv-sym e = mkΣ (e .snd) (e .fst)
