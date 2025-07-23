@@ -46,18 +46,22 @@ U-inview (mkPt (mkU A Au Av Aw) A-rel A-refl) = U-inview-aux A Au Av Aw A-rel A-
 data U-view₂ : (A B : SetoidPt U) → Set₁ where
   v₂ℕ : U-view₂ ℕᵤ ℕᵤ
   v₂Emb : (P Q : Set) (e : Lift₁ (P ↔ Q)) → U-view₂ (Embᵤ P) (Embᵤ Q)
-  v₂Π : (A : SetoidPt U) (B : SetoidPt U) (eAB : SetoidEq A B) (P : SetoidMorphism (El A) U) (Q : SetoidMorphism (El B) U)
-       (ePQ : (a : SetoidPt (El A)) (b : SetoidPt (El B)) (eab : U* .d-rel A (a .p-el) B (b .p-el)) → SetoidEq (setoidApp P a) (setoidApp Q b))
+  v₂Π : (A : SetoidPt U) (B : SetoidPt U) (vAB : U-view₂ B A)
+        (P : SetoidMorphism (El A) U) (Q : SetoidMorphism (El B) U)
+        (vPQ : (a : SetoidPt (El A)) (b : SetoidPt (El B)) (eab : obseq-El A B a b) → U-view₂ (setoidApp P a) (setoidApp Q b))
        → U-view₂ (Πᵤ A P) (Πᵤ B Q)
-  v₂Σ : (A : SetoidPt U) (B : SetoidPt U) (eAB : SetoidEq A B) (P : SetoidMorphism (El A) U) (Q : SetoidMorphism (El B) U)
-       (ePQ : (a : SetoidPt (El A)) (b : SetoidPt (El B)) (eab : U* .d-rel A (a .p-el) B (b .p-el)) → SetoidEq (setoidApp P a) (setoidApp Q b))
+  v₂Σ : (A : SetoidPt U) (B : SetoidPt U) (vAB : U-view₂ A B) (P : SetoidMorphism (El A) U) (Q : SetoidMorphism (El B) U)
+        (vPQ : (a : SetoidPt (El A)) (b : SetoidPt (El B)) (eab : obseq-El A B a b) → U-view₂ (setoidApp P a) (setoidApp Q b))
        → U-view₂ (Σᵤ A P) (Σᵤ B Q)
 
 U-inview₂-aux : (A : SetoidPt U) (vA : U-view A) (B : SetoidPt U) (vB : U-view B) (e : SetoidEq A B) → U-view₂ A B
 U-inview₂-aux A vℕ B vℕ e = v₂ℕ
 U-inview₂-aux A (vEmb P) B (vEmb Q) e = v₂Emb P Q e
-U-inview₂-aux _ (vΠ A vA P vP) _ (vΠ B vB Q vQ) e = v₂Π A B (e .fst) P Q (e .snd)
-U-inview₂-aux _ (vΣ A vA P vP) _ (vΣ B vB Q vQ) e = v₂Σ A B (e .fst) P Q (e .snd)
+U-inview₂-aux _ (vΠ A vA P vP) _ (vΠ B vB Q vQ) e =
+  v₂Π A B (U-inview₂-aux B vB A vA (e .fst)) P Q (λ a b eab → U-inview₂-aux (setoidApp P a) (vP a) (setoidApp Q b) (vQ b) (e .snd a b eab))
+U-inview₂-aux _ (vΣ A vA P vP) _ (vΣ B vB Q vQ) e =
+  v₂Σ A B (U-inview₂-aux A vA B vB (e .fst)) P Q (λ a b eab → U-inview₂-aux (setoidApp P a) (vP a) (setoidApp Q b) (vQ b) (e .snd a b eab))
 
 U-inview₂ : (A : SetoidPt U) (B : SetoidPt U) (e : SetoidEq A B) → U-view₂ A B
 U-inview₂ A B e = U-inview₂-aux A (U-inview A) B (U-inview B) e
+

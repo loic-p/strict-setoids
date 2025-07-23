@@ -109,7 +109,7 @@ El-eq (cEmb P) cℕ a b = Empty
 El-eq (cEmb P) (cEmb Q) a b = Unit
 
 U-eq : {A : Set} (Au : inU A) {B : Set} (Bu : inU B) → Set₁
-U-eq (cΠ A Au P Pu) (cΠ B Bu Q Qu) = Σ (U-eq Au Bu) (λ _ → (a : SetoidPt A) (b : SetoidPt B) → El-eq Au Bu (a .p-el) (b .p-el) → U-eq (Pu a) (Qu b))
+U-eq (cΠ A Au P Pu) (cΠ B Bu Q Qu) = Σ (U-eq Bu Au) (λ _ → (a : SetoidPt A) (b : SetoidPt B) → El-eq Au Bu (a .p-el) (b .p-el) → U-eq (Pu a) (Qu b))
 U-eq (cΠ A Au P Pu) (cΣ B Bu Q Qu) = Empty₁
 U-eq (cΠ A Au P Pu) cℕ = Empty₁
 U-eq (cΠ A Au P Pu) (cEmb Q) = Empty₁
@@ -193,21 +193,30 @@ U* .d-refl A a ae = El-refl (A .p-el .U-inU₂) a ae
 El : (A : SetoidPt U) → Setoid lzero
 El A = fiber U U* A
 
+obseq-El : (A : SetoidPt U) (B : SetoidPt U) (a : SetoidPt (El A)) (b : SetoidPt (El B)) → Set
+obseq-El A B a b = El-eq (A .p-el .U-inU) (B .p-el .U-inU) (a .p-el) (b .p-el)
+
+-- nat
+
 ℕᵤ : SetoidPt U
 ℕᵤ .p-el = mkU ℕ cℕ c₂ℕ c₃ℕ
 ℕᵤ .p-rel = ★₁
 ℕᵤ .p-refl = tt₁
+
+-- embedding
 
 Embᵤ : (P : Set) → SetoidPt U
 Embᵤ P .p-el = mkU P (cEmb P) (c₂Emb P) (c₃Emb P)
 Embᵤ P .p-rel = mkLift₁ (equiv-refl P)
 Embᵤ P .p-refl = refl
 
+-- dependent products
+
 Πᵤ-el : (A : SetoidPt U) (P : SetoidMorphism (El A) U) → U .s-el
 Πᵤ-el A P = mkU _ _ _ (c₃Π (A .p-el .U-set) (A .p-el .U-inU) (A .p-el .U-inU₂) (A .p-el .U-inU₃) (λ a → P .m-el a .U-set)
                            (λ a → P .m-el a .U-inU) (λ a → P .m-el a .U-inU₂) (λ a → P .m-el a .U-inU₃)) 
 
-Πᵤ-rel : (A₀ A₁ : SetoidPt U) (Ae : SetoidEq A₀ A₁) (P₀ : SetoidMorphism (El A₀) U) (P₁ : SetoidMorphism (El A₁) U)
+Πᵤ-rel : (A₀ A₁ : SetoidPt U) (Ae : SetoidEq A₁ A₀) (P₀ : SetoidMorphism (El A₀) U) (P₁ : SetoidMorphism (El A₁) U)
          (Pe : (a₀ : SetoidPt (El A₀)) (a₁ : SetoidPt (El A₁)) (ae : U* .d-rel A₀ (a₀ .p-el) A₁ (a₁ .p-el)) → U .s-rel (P₀ .m-el a₀) (P₁ .m-el a₁))
          → U .s-rel (Πᵤ-el A₀ P₀) (Πᵤ-el A₁ P₁)
 Πᵤ-rel A₀ A₁ Ae P₀ P₁ Pe = mkΣ Ae Pe
@@ -217,6 +226,29 @@ Embᵤ P .p-refl = refl
 
 Πᵤ : (A : SetoidPt U) (P : SetoidMorphism (El A) U) → SetoidPt U
 Πᵤ A P = mkPt (Πᵤ-el A P) (Πᵤ-rel A A (A .p-rel) P P (P .m-rel)) (Πᵤ-refl A P)
+
+-- function application
+
+Πᵤ-app-el : (A : SetoidPt U) (P : SetoidMorphism (El A) U) (f : SetoidPt (El (Πᵤ A P))) (a : SetoidPt (El A)) → El (setoidApp P a) .s-el
+Πᵤ-app-el A P f a = f .p-el a
+
+Πᵤ-app-rel : (A₀ A₁ : SetoidPt U) (Ae : SetoidEq A₀ A₁) (P₀ : SetoidMorphism (El A₀) U) (P₁ : SetoidMorphism (El A₁) U)
+             (Pe : (a : SetoidPt (El A₀)) (b : SetoidPt (El A₁)) (eab : obseq-El A₀ A₁ a b) → SetoidEq (setoidApp P₀ a) (setoidApp P₁ b))
+             (f₀ : SetoidPt (El (Πᵤ A₀ P₀))) (f₁ : SetoidPt (El (Πᵤ A₁ P₁))) (fe : obseq-El (Πᵤ A₀ P₀) (Πᵤ A₁ P₁) f₀ f₁)
+             (a₀ : SetoidPt (El A₀)) (a₁ : SetoidPt (El A₁)) (ae : obseq-El A₀ A₁ a₀ a₁)
+             → El-eq (setoidApp P₀ a₀ .p-el .U-inU) (setoidApp P₁ a₁ .p-el .U-inU) (Πᵤ-app-el A₀ P₀ f₀ a₀) (Πᵤ-app-el A₁ P₁ f₁ a₁)
+Πᵤ-app-rel A₀ A₁ Ae P₀ P₁ Pe f₀ f₁ fe a₀ a₁ ae = fe a₀ a₁ ae
+
+Πᵤ-app-refl : (A : SetoidPt U) (P : SetoidMorphism (El A) U) (f : SetoidPt (El (Πᵤ A P))) (a : SetoidPt (El A))
+              → El-refl (setoidApp P a .p-el .U-inU₂) (Πᵤ-app-el A P f a) (Πᵤ-app-rel A A (A .p-rel) P P (P .m-rel) f f (f .p-rel) a a (a .p-rel))
+Πᵤ-app-refl A P f a = f .p-refl a
+
+Πᵤ-app : (A : SetoidPt U) (P : SetoidMorphism (El A) U) (f : SetoidPt (El (Πᵤ A P))) (a : SetoidPt (El A)) → SetoidPt (El (setoidApp P a))
+Πᵤ-app A P f a .p-el = Πᵤ-app-el A P f a
+Πᵤ-app A P f a .p-rel = Πᵤ-app-rel A A (A .p-rel) P P (P .m-rel) f f (f .p-rel) a a (a .p-rel)
+Πᵤ-app A P f a .p-refl = Πᵤ-app-refl A P f a
+
+-- dependent sums
 
 Σᵤ-el : (A : SetoidPt U) (P : SetoidMorphism (El A) U) → U .s-el
 Σᵤ-el A P = mkU _ _ _ (c₃Σ (A .p-el .U-set) (A .p-el .U-inU) (A .p-el .U-inU₂) (A .p-el .U-inU₃) (λ a → P .m-el a .U-set)
@@ -232,3 +264,76 @@ Embᵤ P .p-refl = refl
 
 Σᵤ : (A : SetoidPt U) (P : SetoidMorphism (El A) U) → SetoidPt U
 Σᵤ A P = mkPt (Σᵤ-el A P) (Σᵤ-rel A A (A .p-rel) P P (P .m-rel)) (Σᵤ-refl A P)
+
+-- first projection
+
+Σᵤ-fst-el : (A : SetoidPt U) (P : SetoidMorphism (El A) U) (x : SetoidPt (El (Σᵤ A P))) → El A .s-el
+Σᵤ-fst-el A P x = x .p-el .fst .p-el
+
+Σᵤ-fst-rel : (A₀ A₁ : SetoidPt U) (Ae : SetoidEq A₀ A₁) (P₀ : SetoidMorphism (El A₀) U) (P₁ : SetoidMorphism (El A₁) U)
+             (Pe : (a : SetoidPt (El A₀)) (b : SetoidPt (El A₁)) (eab : obseq-El A₀ A₁ a b) → SetoidEq (setoidApp P₀ a) (setoidApp P₁ b))
+             (x₀ : SetoidPt (El (Σᵤ A₀ P₀))) (x₁ : SetoidPt (El (Σᵤ A₁ P₁))) (xe : obseq-El (Σᵤ A₀ P₀) (Σᵤ A₁ P₁) x₀ x₁)
+             → El-eq (A₀ .p-el .U-inU) (A₁ .p-el .U-inU) (Σᵤ-fst-el A₀ P₀ x₀) (Σᵤ-fst-el A₁ P₁ x₁)
+Σᵤ-fst-rel A₀ A₁ Ae P₀ P₁ Pe x₀ x₁ xe = xe .fst
+
+Σᵤ-fst-refl : (A : SetoidPt U) (P : SetoidMorphism (El A) U) (x : SetoidPt (El (Σᵤ A P)))
+              → El-refl (A .p-el .U-inU₂) (Σᵤ-fst-el A P x) (Σᵤ-fst-rel A A (A .p-rel) P P (P .m-rel) x x (x .p-rel))
+Σᵤ-fst-refl A P x = transpᵢ (El-refl (A .p-el .U-inU₂) (x .p-el .fst .p-el)) (x .p-refl .fst) (x .p-el .fst .p-refl)
+
+Σᵤ-fst : (A : SetoidPt U) (P : SetoidMorphism (El A) U) (x : SetoidPt (El (Σᵤ A P))) → SetoidPt (El A)
+Σᵤ-fst A P x = mkPt (Σᵤ-fst-el A P x) (Σᵤ-fst-rel A A (A .p-rel) P P (P .m-rel) x x (x .p-rel)) (Σᵤ-fst-refl A P x)
+
+Σᵤ-fst-lemma : (A : SetoidPt U) (P : SetoidMorphism (El A) U) (x : SetoidPt (El (Σᵤ A P))) → x .p-el .fst ≡ Σᵤ-fst A P x
+Σᵤ-fst-lemma A P x = SetoidPt-eq₂ (El A) (x .p-refl .fst) (x .p-el .fst .p-refl) (Σᵤ-fst-refl A P x)
+
+-- second projection
+
+Σᵤ-snd-el-aux : (A : SetoidPt U) (P : SetoidMorphism (El A) U) (x : SetoidPt (El (Σᵤ A P))) {a : SetoidPt (El A)} (ha : x .p-el .fst ≡ a) → El (setoidApp P a) .s-el 
+Σᵤ-snd-el-aux A P x ha = transp (λ a → El (setoidApp P a) .s-el) ha (x .p-el .snd)
+
+Σᵤ-snd-el : (A : SetoidPt U) (P : SetoidMorphism (El A) U) (x : SetoidPt (El (Σᵤ A P))) → El (setoidApp P (Σᵤ-fst A P x)) .s-el
+Σᵤ-snd-el A P x = Σᵤ-snd-el-aux A P x (Σᵤ-fst-lemma A P x)
+
+Σᵤ-snd-rel-aux : (A₀ A₁ : SetoidPt U) (Ae : SetoidEq A₀ A₁) (P₀ : SetoidMorphism (El A₀) U) (P₁ : SetoidMorphism (El A₁) U)
+                 (Pe : (a : SetoidPt (El A₀)) (b : SetoidPt (El A₁)) (eab : obseq-El A₀ A₁ a b) → SetoidEq (setoidApp P₀ a) (setoidApp P₁ b))
+                 (x₀ : SetoidPt (El (Σᵤ A₀ P₀))) (x₁ : SetoidPt (El (Σᵤ A₁ P₁))) (xe : obseq-El (Σᵤ A₀ P₀) (Σᵤ A₁ P₁) x₀ x₁)
+                 {a₀ : SetoidPt (El A₀)} (ha₀ : x₀ .p-el .fst ≡ a₀) {a₁ : SetoidPt (El A₁)} (ha₁ : x₁ .p-el .fst ≡ a₁)
+                 → El-eq (setoidApp P₀ a₀ .p-el .U-inU) (setoidApp P₁ a₁ .p-el .U-inU) (Σᵤ-snd-el-aux A₀ P₀ x₀ ha₀) (Σᵤ-snd-el-aux A₁ P₁ x₁ ha₁)
+Σᵤ-snd-rel-aux A₀ A₁ Ae P₀ P₁ Pe x₀ x₁ xe ha₀ ha₁ =
+  J₂ (λ X₁ E₁ X₂ E₂ → El-eq (setoidApp P₀ X₁ .p-el .U-inU) (setoidApp P₁ X₂ .p-el .U-inU) (Σᵤ-snd-el-aux A₀ P₀ x₀ E₁) (Σᵤ-snd-el-aux A₁ P₁ x₁ E₂)) ha₀ ha₁ (xe .snd)
+
+Σᵤ-snd-rel : (A₀ A₁ : SetoidPt U) (Ae : SetoidEq A₀ A₁) (P₀ : SetoidMorphism (El A₀) U) (P₁ : SetoidMorphism (El A₁) U)
+             (Pe : (a : SetoidPt (El A₀)) (b : SetoidPt (El A₁)) (eab : obseq-El A₀ A₁ a b) → SetoidEq (setoidApp P₀ a) (setoidApp P₁ b))
+             (x₀ : SetoidPt (El (Σᵤ A₀ P₀))) (x₁ : SetoidPt (El (Σᵤ A₁ P₁))) (xe : obseq-El (Σᵤ A₀ P₀) (Σᵤ A₁ P₁) x₀ x₁)
+             → El-eq (setoidApp P₀ (Σᵤ-fst A₀ P₀ x₀) .p-el .U-inU) (setoidApp P₁ (Σᵤ-fst A₁ P₁ x₁) .p-el .U-inU) (Σᵤ-snd-el A₀ P₀ x₀) (Σᵤ-snd-el A₁ P₁ x₁)
+Σᵤ-snd-rel A₀ A₁ Ae P₀ P₁ Pe x₀ x₁ xe = Σᵤ-snd-rel-aux A₀ A₁ Ae P₀ P₁ Pe x₀ x₁ xe (Σᵤ-fst-lemma A₀ P₀ x₀) (Σᵤ-fst-lemma A₁ P₁ x₁)
+
+Σᵤ-snd-refl : (A : SetoidPt U) (P : SetoidMorphism (El A) U) (x : SetoidPt (El (Σᵤ A P)))
+              → El-refl (setoidApp P (Σᵤ-fst A P x) .p-el .U-inU₂) (Σᵤ-snd-el A P x) (Σᵤ-snd-rel A A (A .p-rel) P P (P .m-rel) x x (x .p-rel))
+Σᵤ-snd-refl A P x =
+  Jᵢ (λ X E → El-refl (setoidApp P X .p-el .U-inU₂) (Σᵤ-snd-el-aux A P x E) (Σᵤ-snd-rel-aux A A (A .p-rel) P P (P .m-rel) x x (x .p-rel) E E))
+     (Σᵤ-fst-lemma A P x) (x .p-refl .snd)
+
+Σᵤ-snd : (A : SetoidPt U) (P : SetoidMorphism (El A) U) (x : SetoidPt (El (Σᵤ A P))) → SetoidPt (El (setoidApp P (Σᵤ-fst A P x)))
+Σᵤ-snd A P x .p-el = Σᵤ-snd-el A P x
+Σᵤ-snd A P x .p-rel = Σᵤ-snd-rel A A (A .p-rel) P P (P .m-rel) x x (x .p-rel)
+Σᵤ-snd A P x .p-refl = Σᵤ-snd-refl A P x
+
+-- dependent pairs
+
+Σᵤ-pair-el : (A : SetoidPt U) (P : SetoidMorphism (El A) U) (a : SetoidPt (El A)) (p : SetoidPt (El (setoidApp P a))) → El (Σᵤ A P) .s-el
+Σᵤ-pair-el A P a p = mkΣ a (p .p-el)
+
+Σᵤ-pair-rel : (A₀ A₁ : SetoidPt U) (Ae : SetoidEq A₀ A₁) (P₀ : SetoidMorphism (El A₀) U) (P₁ : SetoidMorphism (El A₁) U)
+             (Pe : (a : SetoidPt (El A₀)) (b : SetoidPt (El A₁)) (eab : obseq-El A₀ A₁ a b) → SetoidEq (setoidApp P₀ a) (setoidApp P₁ b))
+             (a₀ : SetoidPt (El A₀)) (a₁ : SetoidPt (El A₁)) (ae : obseq-El A₀ A₁ a₀ a₁)
+             (p₀ : SetoidPt (El (setoidApp P₀ a₀))) (p₁ : SetoidPt (El (setoidApp P₁ a₁))) (pe : obseq-El (setoidApp P₀ a₀) (setoidApp P₁ a₁) p₀ p₁)
+             → El-eq (Σᵤ A₀ P₀ .p-el .U-inU) (Σᵤ A₁ P₁ .p-el .U-inU) (Σᵤ-pair-el A₀ P₀ a₀ p₀) (Σᵤ-pair-el A₁ P₁ a₁ p₁)
+Σᵤ-pair-rel A₀ A₁ Ae P₀ P₁ Pe a₀ a₁ ae p₀ p₁ pe = mkΣ ae pe
+
+Σᵤ-pair-refl : (A : SetoidPt U) (P : SetoidMorphism (El A) U) (a : SetoidPt (El A)) (p : SetoidPt (El (setoidApp P a)))
+               → El-refl (Σᵤ A P .p-el .U-inU₂) (Σᵤ-pair-el A P a p) (Σᵤ-pair-rel A A (A .p-rel) P P (P .m-rel) a a (a .p-rel) p p (p .p-rel))
+Σᵤ-pair-refl A P a p = mk& refl (p .p-refl)
+
+Σᵤ-pair : (A : SetoidPt U) (P : SetoidMorphism (El A) U) (a : SetoidPt (El A)) (p : SetoidPt (El (setoidApp P a))) → SetoidPt (El (Σᵤ A P))
+Σᵤ-pair A P a p = mkPt (Σᵤ-pair-el A P a p) (Σᵤ-pair-rel A A (A .p-rel) P P (P .m-rel) a a (a .p-rel) p p (p .p-rel)) (Σᵤ-pair-refl A P a p)

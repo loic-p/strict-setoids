@@ -77,6 +77,9 @@ J₂ : {ℓ₁ ℓ₂ ℓ₃ : Level} {A : Set ℓ₁} {a : A} {B : Set ℓ₂} 
      → (t : P a refl b refl) → P a' e b' f
 J₂ {a = a} {B = B} {b = b} P e = J (λ a' e → {b' : B} (f : b ≡ b') (t : P a refl b refl) → P a' e b' f) e (J (P a refl))
 
+Jᵢ : {ℓ₁ ℓ₂ : Level} {A : Set ℓ₁} {a : A} (P : (b : A) → a ≡ b → Prop ℓ₂) {b : A} (e : a ≡ b) (t : P a refl) → P b e
+Jᵢ {a = a} P {b = b} e t = transpᵢ (λ b → (e : a ≡ b) → P b e) e (λ e → t) e
+
 data nateq : ℕ → ℕ → Set where
   nateq-zero : nateq zero zero
   nateq-suc : {n m : ℕ} → nateq n m → nateq (suc n) (suc m)
