@@ -11,7 +11,7 @@ module views where
 
 data U-view : (A : SetoidPt U) → Set₁ where
   vℕ : U-view ℕᵤ
-  vEmb : (P : Set) → U-view (Embᵤ P)
+  vEmb : (P : Set) (eP : Lift₁ (P ↔ P)) → U-view (Embᵤ P eP)
   vΠ : (A : SetoidPt U) (Av : U-view A) (P : SetoidMorphism (El A) U) (vP : (a : SetoidPt (El A)) → U-view (setoidApp P a)) → U-view (Πᵤ A P)
   vΣ : (A : SetoidPt U) (Av : U-view A) (P : SetoidMorphism (El A) U) (vP : (a : SetoidPt (El A)) → U-view (setoidApp P a)) → U-view (Σᵤ A P)
 
@@ -35,7 +35,7 @@ U-inview-aux Σt Σu Σv (c₃Σ A Au Av Aw P Pu Pv Pw) Σ-rel Σ-refl =
     vP a = U-inview-aux (P a) (Pu a) (Pv a) (Pw a) (Σ-rel .snd a a (a .p-rel)) (Σ-refl .snd a)
   in vΣ ptA vA ptP vP
 U-inview-aux A Au Av c₃ℕ Ax Ay = vℕ
-U-inview-aux A Au Av (c₃Emb P) Ax Ay = transp (λ X → (H : X ≡ mkLift₁ (equiv-refl A)) → U-view (mkPt (mkU A (cEmb A) (c₂Emb A) (c₃Emb A)) X H)) (sym Ay) (λ H → vEmb P) Ay
+U-inview-aux A Au Av (c₃Emb P) Ax Ay = vEmb P Ax --transp (λ X → U-view (mkPt (mkU A (cEmb A) (c₂Emb A) (c₃Emb A)) X tt₁)) (sym Ay) (vEmb P) Ay
 
 U-inview : (A : SetoidPt U) → U-view A
 U-inview (mkPt (mkU A Au Av Aw) A-rel A-refl) = U-inview-aux A Au Av Aw A-rel A-refl
@@ -45,7 +45,7 @@ U-inview (mkPt (mkU A Au Av Aw) A-rel A-refl) = U-inview-aux A Au Av Aw A-rel A-
 
 data U-view₂ : (A B : SetoidPt U) → Set₁ where
   v₂ℕ : U-view₂ ℕᵤ ℕᵤ
-  v₂Emb : (P Q : Set) (e : Lift₁ (P ↔ Q)) → U-view₂ (Embᵤ P) (Embᵤ Q)
+  v₂Emb : (P : Set) (eP : Lift₁ (P ↔ P)) (Q : Set) (eQ : Lift₁ (Q ↔ Q)) (ePQ : Lift₁ (P ↔ Q)) → U-view₂ (Embᵤ P eP) (Embᵤ Q eQ)
   v₂Π : (A : SetoidPt U) (B : SetoidPt U) (vAB : U-view₂ B A)
         (P : SetoidMorphism (El A) U) (Q : SetoidMorphism (El B) U)
         (vPQ : (a : SetoidPt (El A)) (b : SetoidPt (El B)) (eab : obseq-El A B a b) → U-view₂ (setoidApp P a) (setoidApp Q b))
@@ -56,7 +56,7 @@ data U-view₂ : (A B : SetoidPt U) → Set₁ where
 
 U-inview₂-aux : (A : SetoidPt U) (vA : U-view A) (B : SetoidPt U) (vB : U-view B) (e : SetoidEq A B) → U-view₂ A B
 U-inview₂-aux A vℕ B vℕ e = v₂ℕ
-U-inview₂-aux A (vEmb P) B (vEmb Q) e = v₂Emb P Q e
+U-inview₂-aux A (vEmb P eP) B (vEmb Q eQ) e = v₂Emb P eP Q eQ e
 U-inview₂-aux _ (vΠ A vA P vP) _ (vΠ B vB Q vQ) e =
   v₂Π A B (U-inview₂-aux B vB A vA (e .fst)) P Q (λ a b eab → U-inview₂-aux (setoidApp P a) (vP a) (setoidApp Q b) (vQ b) (e .snd a b eab))
 U-inview₂-aux _ (vΣ A vA P vP) _ (vΣ B vB Q vQ) e =

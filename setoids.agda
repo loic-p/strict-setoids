@@ -150,7 +150,7 @@ U-refl : {A : Set} {Au : inU A} (Av : inU₂ A Au) → U-eq Au Au → Prop₁
 U-refl (c₂Π A Au Ar Av P Pu Pr Pv) e = & (U-refl Av (e .fst)) (λ _ → (a : SetoidPt (mkSetoid A (El-eq Au Au) Ar)) → U-refl (Pv a) (e .snd a a (a .p-rel)))
 U-refl (c₂Σ A Au Ar Av P Pu Pr Pv) e = & (U-refl Av (e .fst)) (λ _ → (a : SetoidPt (mkSetoid A (El-eq Au Au) Ar)) → U-refl (Pv a) (e .snd a a (a .p-rel)))
 U-refl c₂ℕ e = ⊤₁
-U-refl (c₂Emb P) e = e ≡ mkLift₁ (equiv-refl P)
+U-refl (c₂Emb P) e = ⊤₁ -- e ≡ mkLift₁ (equiv-refl P)
 
 data inU₃ : (A : Set) (Au : inU A) (Av : inU₂ A Au) → Set₁ where
   c₃Π : (A : Set) (Au : inU A) (Av : inU₂ A Au) (Aw : inU₃ A Au Av)
@@ -205,10 +205,10 @@ obseq-El A B a b = El-eq (A .p-el .U-inU) (B .p-el .U-inU) (a .p-el) (b .p-el)
 
 -- embedding
 
-Embᵤ : (P : Set) → SetoidPt U
-Embᵤ P .p-el = mkU P (cEmb P) (c₂Emb P) (c₃Emb P)
-Embᵤ P .p-rel = mkLift₁ (equiv-refl P)
-Embᵤ P .p-refl = refl
+Embᵤ : (P : Set) (eP : Lift₁ (P ↔ P)) → SetoidPt U
+Embᵤ P eP .p-el = mkU P (cEmb P) (c₂Emb P) (c₃Emb P)
+Embᵤ P eP .p-rel = eP -- mkLift₁ (equiv-refl P)
+Embᵤ P eP .p-refl = tt₁ -- refl
 
 -- dependent products
 

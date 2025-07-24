@@ -9,7 +9,7 @@ module fibrancy where
 
 obseq-sym-aux : (A : SetoidPt U) (vA : U-view A) (B : SetoidPt U) (vB : U-view B) (a : SetoidPt (El A)) (b : SetoidPt (El B)) → obseq-El A B a b → obseq-El B A b a
 obseq-sym-aux _ vℕ _ vℕ a b e = nateq-sym e
-obseq-sym-aux _ (vEmb P) _ (vEmb Q) a b e = ★
+obseq-sym-aux _ (vEmb P eP) _ (vEmb Q eQ) a b e = ★
 obseq-sym-aux _ (vΠ A vA P vP) _ (vΠ B vB Q vQ) f g efg b a eba =
   obseq-sym-aux (setoidApp P a) (vP a) (setoidApp Q b) (vQ b) (Πᵤ-app A P f a) (Πᵤ-app B Q g b) (efg a b (obseq-sym-aux B vB A vA b a eba)) 
 obseq-sym-aux _ (vΣ A vA P vP) _ (vΣ B vB Q vQ) x y e =
@@ -24,7 +24,7 @@ obseq-sym A B a b = obseq-sym-aux A (U-inview A) B (U-inview B) a b
 
 obseq-symU-aux : (A : SetoidPt U) (vA : U-view A) (B : SetoidPt U) (vB : U-view B) → SetoidEq A B → SetoidEq B A
 obseq-symU-aux _ vℕ _ vℕ e = ★₁
-obseq-symU-aux _ (vEmb P) _ (vEmb P₁) e = mkLift₁ (equiv-sym (e .lift₁))
+obseq-symU-aux _ (vEmb P eP) _ (vEmb Q eQ) e = mkLift₁ (equiv-sym (e .lift₁))
 obseq-symU-aux _ (vΠ A vA P vP) _ (vΠ B vB Q vQ) e =
   mkΣ (obseq-symU-aux B vB A vA (e .fst)) (λ b a eba → obseq-symU-aux (setoidApp P a) (vP a) (setoidApp Q b) (vQ b) (e. snd a b (obseq-sym B A b a eba)))
 obseq-symU-aux _ (vΣ A vA P vP) _ (vΣ B vB Q vQ) e =
