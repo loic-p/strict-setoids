@@ -40,6 +40,38 @@ U-inview-aux A Au Av (c₃Emb P) Ax Ay = vEmb P Ax --transp (λ X → U-view (mk
 U-inview : (A : SetoidPt U) → U-view A
 U-inview (mkPt (mkU A Au Av Aw) A-rel A-refl) = U-inview-aux A Au Av Aw A-rel A-refl
 
+obseq-refl : (A : SetoidPt U) (a : SetoidPt (El A)) → obseq-El A A a a
+obseq-refl A a = a .p-rel
+
+obseq-reflU : (A : SetoidPt U) → SetoidEq A A
+obseq-reflU A = A .p-rel
+
+obseq-sym-aux : (A : SetoidPt U) (vA : U-view A) (B : SetoidPt U) (vB : U-view B) (a : SetoidPt (El A)) (b : SetoidPt (El B)) → obseq-El A B a b → obseq-El B A b a
+obseq-sym-aux _ vℕ _ vℕ a b e = nateq-sym e
+obseq-sym-aux _ (vEmb P eP) _ (vEmb Q eQ) a b e = ★
+obseq-sym-aux _ (vΠ A vA P vP) _ (vΠ B vB Q vQ) f g efg b a eba =
+  obseq-sym-aux (setoidApp P a) (vP a) (setoidApp Q b) (vQ b) (Πᵤ-app A P f a) (Πᵤ-app B Q g b) (efg a b (obseq-sym-aux B vB A vA b a eba)) 
+obseq-sym-aux _ (vΣ A vA P vP) _ (vΣ B vB Q vQ) x y e =
+  J₂ (λ x _ y _ → obseq-El (Σᵤ B Q) (Σᵤ A P) y x) (Σᵤ-lemma A P x) (Σᵤ-lemma B Q y)
+     (mkΣ (obseq-sym-aux A vA B vB (Σᵤ-fst A P (correctPair A P x)) (Σᵤ-fst B Q (correctPair B Q y)) (e .fst))
+          (obseq-sym-aux (setoidApp P (Σᵤ-fst A P (correctPair A P x))) (vP (Σᵤ-fst A P (correctPair A P x)))
+                         (setoidApp Q (Σᵤ-fst B Q (correctPair B Q y))) (vQ (Σᵤ-fst B Q (correctPair B Q y)))
+                         (Σᵤ-snd A P (correctPair A P x)) (Σᵤ-snd B Q (correctPair B Q y)) (e .snd))) 
+
+obseq-sym : (A B : SetoidPt U) (a : SetoidPt (El A)) (b : SetoidPt (El B)) → obseq-El A B a b → obseq-El B A b a
+obseq-sym A B a b = obseq-sym-aux A (U-inview A) B (U-inview B) a b
+
+obseq-symU-aux : (A : SetoidPt U) (vA : U-view A) (B : SetoidPt U) (vB : U-view B) → SetoidEq A B → SetoidEq B A
+obseq-symU-aux _ vℕ _ vℕ e = ★₁
+obseq-symU-aux _ (vEmb P eP) _ (vEmb Q eQ) e = mkLift₁ (equiv-sym (e .lift₁))
+obseq-symU-aux _ (vΠ A vA P vP) _ (vΠ B vB Q vQ) e =
+  mkΣ (obseq-symU-aux A vA B vB (e .fst)) (λ b a eba → obseq-symU-aux (setoidApp P a) (vP a) (setoidApp Q b) (vQ b) (e. snd a b (obseq-sym B A b a eba)))
+obseq-symU-aux _ (vΣ A vA P vP) _ (vΣ B vB Q vQ) e =
+  mkΣ (obseq-symU-aux A vA B vB (e .fst)) (λ b a eba → obseq-symU-aux (setoidApp P a) (vP a) (setoidApp Q b) (vQ b) (e. snd a b (obseq-sym B A b a eba)))
+
+obseq-symU : (A : SetoidPt U) (B : SetoidPt U) → SetoidEq A B → SetoidEq B A
+obseq-symU A B e = obseq-symU-aux A (U-inview A) B (U-inview B) e
+
 -- View for two equal points. This way, we only have to pattern match against
 -- four cases.
 
@@ -58,7 +90,7 @@ U-inview₂-aux : (A : SetoidPt U) (vA : U-view A) (B : SetoidPt U) (vB : U-view
 U-inview₂-aux A vℕ B vℕ e = v₂ℕ
 U-inview₂-aux A (vEmb P eP) B (vEmb Q eQ) e = v₂Emb P eP Q eQ e
 U-inview₂-aux _ (vΠ A vA P vP) _ (vΠ B vB Q vQ) e =
-  v₂Π A B (U-inview₂-aux B vB A vA (e .fst)) P Q (λ a b eab → U-inview₂-aux (setoidApp P a) (vP a) (setoidApp Q b) (vQ b) (e .snd a b eab))
+  v₂Π A B (U-inview₂-aux B vB A vA (obseq-symU A B (e .fst))) P Q (λ a b eab → U-inview₂-aux (setoidApp P a) (vP a) (setoidApp Q b) (vQ b) (e .snd a b eab))
 U-inview₂-aux _ (vΣ A vA P vP) _ (vΣ B vB Q vQ) e =
   v₂Σ A B (U-inview₂-aux A vA B vB (e .fst)) P Q (λ a b eab → U-inview₂-aux (setoidApp P a) (vP a) (setoidApp Q b) (vQ b) (e .snd a b eab))
 

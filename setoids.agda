@@ -109,7 +109,7 @@ El-eq (cEmb P) cℕ a b = Empty
 El-eq (cEmb P) (cEmb Q) a b = Unit
 
 U-eq : {A : Set} (Au : inU A) {B : Set} (Bu : inU B) → Set₁
-U-eq (cΠ A Au P Pu) (cΠ B Bu Q Qu) = Σ (U-eq Bu Au) (λ _ → (a : SetoidPt A) (b : SetoidPt B) → El-eq Au Bu (a .p-el) (b .p-el) → U-eq (Pu a) (Qu b))
+U-eq (cΠ A Au P Pu) (cΠ B Bu Q Qu) = Σ (U-eq Au Bu) (λ _ → (a : SetoidPt A) (b : SetoidPt B) → El-eq Au Bu (a .p-el) (b .p-el) → U-eq (Pu a) (Qu b))
 U-eq (cΠ A Au P Pu) (cΣ B Bu Q Qu) = Empty₁
 U-eq (cΠ A Au P Pu) cℕ = Empty₁
 U-eq (cΠ A Au P Pu) (cEmb Q) = Empty₁
@@ -216,7 +216,7 @@ Embᵤ P eP .p-refl = tt₁ -- refl
 Πᵤ-el A P = mkU _ _ _ (c₃Π (A .p-el .U-set) (A .p-el .U-inU) (A .p-el .U-inU₂) (A .p-el .U-inU₃) (λ a → P .m-el a .U-set)
                            (λ a → P .m-el a .U-inU) (λ a → P .m-el a .U-inU₂) (λ a → P .m-el a .U-inU₃)) 
 
-Πᵤ-rel : (A₀ A₁ : SetoidPt U) (Ae : SetoidEq A₁ A₀) (P₀ : SetoidMorphism (El A₀) U) (P₁ : SetoidMorphism (El A₁) U)
+Πᵤ-rel : (A₀ A₁ : SetoidPt U) (Ae : SetoidEq A₀ A₁) (P₀ : SetoidMorphism (El A₀) U) (P₁ : SetoidMorphism (El A₁) U)
          (Pe : (a₀ : SetoidPt (El A₀)) (a₁ : SetoidPt (El A₁)) (ae : U* .d-rel A₀ (a₀ .p-el) A₁ (a₁ .p-el)) → U .s-rel (P₀ .m-el a₀) (P₁ .m-el a₁))
          → U .s-rel (Πᵤ-el A₀ P₀) (Πᵤ-el A₁ P₁)
 Πᵤ-rel A₀ A₁ Ae P₀ P₁ Pe = mkΣ Ae Pe
