@@ -77,6 +77,13 @@ J₂ : {ℓ₁ ℓ₂ ℓ₃ : Level} {A : Set ℓ₁} {a : A} {B : Set ℓ₂} 
      → (t : P a refl b refl) → P a' e b' f
 J₂ {a = a} {B = B} {b = b} P e = J (λ a' e → {b' : B} (f : b ≡ b') (t : P a refl b refl) → P a' e b' f) e (J (P a refl))
 
+J₃ : {ℓ₁ ℓ₂ ℓ₃ ℓ₄ : Level} {A : Set ℓ₁} {a : A} {B : Set ℓ₂} {b : B} {C : Set ℓ₃} {c : C} (P : (a' : A) → a ≡ a' → (b' : B) → b ≡ b' → (c' : C) → c ≡ c' → Set ℓ₄)
+     {a' : A} (e : a ≡ a') {b' : B} (f : b ≡ b') {c' : C} (g : c ≡ c')
+     → (t : P a refl b refl c refl) → P a' e b' f c' g
+J₃ {a = a} {B = B} {b = b} {C = C} {c = c} P e =
+  J (λ a' e → {b' : B} (f : b ≡ b') {c' : C} (g : c ≡ c') (t : P a refl b refl c refl) → P a' e b' f c' g) e
+    (λ f → J (λ b' f → {c' : C} (g : c ≡ c') (t : P a refl b refl c refl) → P a refl b' f c' g) f (J (P a refl b refl)))
+
 Jᵢ : {ℓ₁ ℓ₂ : Level} {A : Set ℓ₁} {a : A} (P : (b : A) → a ≡ b → Prop ℓ₂) {b : A} (e : a ≡ b) (t : P a refl) → P b e
 Jᵢ {a = a} P {b = b} e t = transpᵢ (λ b → (e : a ≡ b) → P b e) e (λ e → t) e
 
@@ -92,6 +99,10 @@ nateq-sym : {n m : ℕ} → nateq n m → nateq m n
 nateq-sym nateq-zero = nateq-zero
 nateq-sym (nateq-suc e) = nateq-suc (nateq-sym e)
 
+nateq-trans : {n m l : ℕ} → nateq n m → nateq m l → nateq n l
+nateq-trans nateq-zero e₂ = e₂
+nateq-trans (nateq-suc e₁) (nateq-suc e₂) = nateq-suc (nateq-trans e₁ e₂)
+
 _↔_ : {ℓ₁ ℓ₂ : Level} (P : Set ℓ₁) (Q : Set ℓ₂) → Set (ℓ₁ ⊔ ℓ₂)
 P ↔ Q = Σ (P → Q) (λ _ → Q → P)
 
@@ -100,3 +111,6 @@ equiv-refl P = mkΣ (λ x → x) (λ x → x)
 
 equiv-sym : {ℓ : Level} {P Q : Set ℓ} → P ↔ Q → Q ↔ P
 equiv-sym e = mkΣ (e .snd) (e .fst)
+
+equiv-trans : {ℓ : Level} {P Q R : Set ℓ} → P ↔ Q → Q ↔ R → P ↔ R
+equiv-trans e₀ e₁ = mkΣ (λ x → e₁ .fst (e₀ .fst x)) (λ x → e₀ .snd (e₁ .snd x))

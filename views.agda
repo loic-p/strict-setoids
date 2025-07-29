@@ -72,8 +72,7 @@ obseq-symU-aux _ (vΣ A vA P vP) _ (vΣ B vB Q vQ) e =
 obseq-symU : (A : SetoidPt U) (B : SetoidPt U) → SetoidEq A B → SetoidEq B A
 obseq-symU A B e = obseq-symU-aux A (U-inview A) B (U-inview B) e
 
--- View for two equal points. This way, we only have to pattern match against
--- four cases.
+-- View for two equal points. Note the contravariance in the domain of Π.
 
 data U-view₂ : (A B : SetoidPt U) → Set₁ where
   v₂ℕ : U-view₂ ℕᵤ ℕᵤ
