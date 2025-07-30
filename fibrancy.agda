@@ -209,3 +209,28 @@ cast-eq A B eAB a = cast-refl-aux A B (U-inview₂ A B eAB) a
 
 obseq-trans : ∀ (A B : SetoidPt U) (eAB : SetoidEq A B) (C : SetoidPt U) a b c → obseq-El A B a b → obseq-El C A c a → obseq-El C B c b
 obseq-trans A B eAB C = obseq-trans-aux A B (U-inview₂ A B eAB) C (U-inview C) 
+
+-- transitivity on universe
+
+obseq-transU-aux : (A B C : SetoidPt U) (vA : U-view A) (vB : U-view B) (vC : U-view C) (eAB : SetoidEq A B) (eCA : SetoidEq C A) → SetoidEq C B
+obseq-transU-aux _ _ _ vℕ vℕ vℕ eAB eCA = ★₁
+obseq-transU-aux _ _ _ (vEmb P eP) (vEmb P₁ eP₁) (vEmb P₂ eP₂) eAB eCA = mkLift₁ (equiv-trans (eCA .lift₁) (eAB .lift₁))
+obseq-transU-aux _ _ _ (vΠ A vA P vP) (vΠ B vB Q vQ) (vΠ C vC R vR) e f =
+  mkΣ (obseq-transU-aux A B C vA vB vC (e .fst) (f .fst))
+      (λ c b ecb →
+        let
+          a = cast C A (f .fst) c
+          eca = cast-eq C A (f .fst) c
+          eab = obseq-sym B A b a (obseq-trans C A (f .fst) B c a b eca (obseq-sym C B c b ecb))
+        in obseq-transU-aux (setoidApp P a) (setoidApp Q b) (setoidApp R c) (vP a) (vQ b) (vR c) (e .snd a b eab) (f .snd c a eca)) 
+obseq-transU-aux _ _ _ (vΣ A vA P vP) (vΣ B vB Q vQ) (vΣ C vC R vR) e f =
+  mkΣ (obseq-transU-aux A B C vA vB vC (e .fst) (f .fst))
+      (λ c b ecb →
+        let
+          a = cast C A (f .fst) c
+          eca = cast-eq C A (f .fst) c
+          eab = obseq-sym B A b a (obseq-trans C A (f .fst) B c a b eca (obseq-sym C B c b ecb))
+        in obseq-transU-aux (setoidApp P a) (setoidApp Q b) (setoidApp R c) (vP a) (vQ b) (vR c) (e .snd a b eab) (f .snd c a eca)) 
+
+obseq-transU : (A B C : SetoidPt U) (eAB : SetoidEq A B) (eCA : SetoidEq C A) → SetoidEq C B
+obseq-transU A B C = obseq-transU-aux A B C (U-inview A) (U-inview B) (U-inview C)
