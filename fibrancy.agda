@@ -3,13 +3,51 @@
 open import Agda.Primitive
 open import lib
 open import setoids
+open import typeformers
 open import views
 
 module fibrancy where
 
+-- Some lemmas on closures for quotients
+
+clo-snoc : {ℓ : Level} (A : Setoid ℓ) (R : (a b : SetoidPt A) → Set ℓ) {a b c : SetoidPt A} → R a b → closure A R b c → closure A R a c
+clo-snoc A R r clo-refl = clo-cons _ _ r (clo-refl)
+clo-snoc A R r (clo-cons c d r' e) = clo-cons c d r' (clo-snoc A R r e)
+clo-snoc A R r (clo-anticons c d r' e) = clo-anticons c d r' (clo-snoc A R r e)
+
+clo-antisnoc : {ℓ : Level} (A : Setoid ℓ) (R : (a b : SetoidPt A) → Set ℓ) {a b c : SetoidPt A} → R b a → closure A R b c → closure A R a c
+clo-antisnoc A R r clo-refl = clo-anticons _ _ r clo-refl
+clo-antisnoc A R r (clo-cons c d r' e) = clo-cons c d r' (clo-antisnoc A R r e)
+clo-antisnoc A R r (clo-anticons c d r' e) = clo-anticons c d r' (clo-antisnoc A R r e)
+
+closure-sym : {ℓ : Level} (A : Setoid ℓ) (R : (a b : SetoidPt A) → Set ℓ) {a b : SetoidPt A} → closure A R a b → closure A R b a
+closure-sym A R clo-refl = clo-refl
+closure-sym A R (clo-cons b c r e) = clo-antisnoc A R r (closure-sym A R e)
+closure-sym A R (clo-anticons b c r e) = clo-snoc A R r (closure-sym A R e)
+
+closure-trans : {ℓ : Level} (A : Setoid ℓ) (R : (a b : SetoidPt A) → Set ℓ) {a b c : SetoidPt A} → closure A R a b → closure A R b c → closure A R a c
+closure-trans A R e clo-refl = e
+closure-trans A R e (clo-cons c d r f) = clo-cons c d r (closure-trans A R e f)
+closure-trans A R e (clo-anticons c d r f) = clo-anticons c d r (closure-trans A R e f)
+
+closure-cast : (A B : SetoidPt U) (cast : SetoidPt (El A) → SetoidPt (El B)) (cast-eq : (a : SetoidPt (El A)) → obseq-El A B a (cast a))
+               (R : SetoidRelation (El A)) (S : SetoidRelation (El B))
+               (eRS : (a₀ : SetoidPt (El A)) (b₀ : SetoidPt (El B)) (e₀ : obseq-El A B a₀ b₀)
+                      (a₁ : SetoidPt (El A)) (b₁ : SetoidPt (El B)) (e₁ : obseq-El A B a₁ b₁) → R .r-el a₀ a₁ ↔ S .r-el b₀ b₁)
+               (a a' : SetoidPt (El A)) → closure (El A) (R .r-el) a a' → closure (El B) (S .r-el) (cast a) (cast a')
+closure-cast A B cast cast-eq R S eRS a a' clo-refl = clo-refl
+closure-cast A B cast cast-eq R S eRS a a' (clo-cons b .a' x e) =
+  clo-cons (cast b) (cast a') (eRS b (cast b) (cast-eq b) a' (cast a') (cast-eq a') .fst x) (closure-cast A B cast cast-eq R S eRS a b e)
+closure-cast A B cast cast-eq R S eRS a a' (clo-anticons b .a' x e) =
+  clo-anticons (cast b) (cast a') (eRS a' (cast a') (cast-eq a') b (cast b) (cast-eq b) .fst x) (closure-cast A B cast cast-eq R S eRS a b e)
+
+-- Now we can define "fibrancy structures" (that is, cast and transitivity) with a big mutual induction on types
+
 mutual
   cast-aux-el : (A B : SetoidPt U) (vAB : U-view₂ A B) → SetoidPt (El A) → El B .s-el
   cast-aux-el _ _ v₂ℕ a = a .p-el
+  cast-aux-el _ _ (v₂ℚ A B vAB R S eRS) a =
+    mkPt (cast-aux-el A B vAB (a .p-el)) (cast-aux-rel A A (A .p-rel) B B (B .p-rel) vAB vAB (a .p-el) (a .p-el) (a .p-el .p-rel)) (cast-aux-refl A B vAB (a .p-el))
   cast-aux-el _ _ (v₂Emb P eP Q eQ ePQ) a = ePQ .lift₁ .fst (a .p-el)
   cast-aux-el _ _ (v₂Π A B vBA P Q vPQ) f b =
     let
@@ -36,6 +74,27 @@ mutual
                  (a₀ : SetoidPt (El A₀)) (a₁ : SetoidPt (El A₁)) (ae : obseq-El A₀ A₁ a₀ a₁)
                  → El-eq (B₀ .p-el .U-inU) (B₁ .p-el .U-inU) (cast-aux-el A₀ B₀ vAB₀ a₀) (cast-aux-el A₁ B₁ vAB₁ a₁)
   cast-aux-rel _ _ Ae _ _ Be v₂ℕ v₂ℕ a₀ a₁ ae = ae
+  cast-aux-rel _ _ ℚAe _ _ ℚBe (v₂ℚ A₀ B₀ vAB₀ R₀ S₀ eRS₀) (v₂ℚ A₁ B₁ vAB₁ R₁ S₁ eRS₁) x₀ x₁ xe =
+    let
+      a₀ = x₀ .p-el
+      a'₀ = xe .qe-a'
+      a₁ = x₁ .p-el
+      a'₁ = xe .qe-b'
+
+      cast₀ : SetoidPt (El A₀) → SetoidPt (El B₀)
+      cast₀ a₀ = mkPt (cast-aux-el A₀ B₀ vAB₀ a₀) (cast-aux-rel A₀ A₀ (A₀ .p-rel) B₀ B₀ (B₀ .p-rel) vAB₀ vAB₀ a₀ a₀ (a₀ .p-rel)) (cast-aux-refl A₀ B₀ vAB₀ a₀)
+      cast₁ : SetoidPt (El A₁) → SetoidPt (El B₁)
+      cast₁ a₁ = mkPt (cast-aux-el A₁ B₁ vAB₁ a₁) (cast-aux-rel A₁ A₁ (A₁ .p-rel) B₁ B₁ (B₁ .p-rel) vAB₁ vAB₁ a₁ a₁ (a₁ .p-rel)) (cast-aux-refl A₁ B₁ vAB₁ a₁)
+
+      b₀ = cast₀ a₀
+      b'₀ = cast₀ a'₀
+      b₁ = cast₁ a₁
+      b'₁ = cast₁ a'₁
+
+      be : obseq-El B₀ B₁ b'₀ b'₁
+      be = cast-aux-rel A₀ A₁ (ℚAe .fst) B₀ B₁ (ℚBe .fst) vAB₀ vAB₁ a'₀ a'₁ (xe .qe-a'≡b')
+    in mkQuoEq b'₀ b'₁ be (closure-cast A₀ B₀ cast₀ (cast-refl-aux A₀ B₀ vAB₀) R₀ S₀ eRS₀ a₀ a'₀ (xe .qe-a≡a'))
+               (closure-cast A₁ B₁ cast₁ (cast-refl-aux A₁ B₁ vAB₁) R₁ S₁ eRS₁ a₁ a'₁ (xe .qe-b≡b'))
   cast-aux-rel _ _ Ae _ _ Be (v₂Emb P eP Q eQ ePQ) (v₂Emb P₁ eP₁ Q₁ eQ₁ ePQ₁) a₀ a₁ ae = ★
   cast-aux-rel _ _ ΠAPe _ _ ΠBQe (v₂Π A₀ B₀ vBA₀ P₀ Q₀ vPQ₀) (v₂Π A₁ B₁ vBA₁ P₁ Q₁ vPQ₁) f₀ f₁ fe b₀ b₁ be =
     let
@@ -92,6 +151,7 @@ mutual
   cast-aux-refl : (A B : SetoidPt U) (vAB : U-view₂ A B) (a : SetoidPt (El A))
                   → El-refl (B .p-el .U-inU₂) (cast-aux-el A B vAB a) (cast-aux-rel A A (A .p-rel) B B (B .p-rel) vAB vAB a a (a .p-rel))
   cast-aux-refl _ _ v₂ℕ a = tt
+  cast-aux-refl _ _ (v₂ℚ A B vAB R S eRS) (mkPt a _ (mkQuoEqRefl r)) = mkQuoEqRefl (cast-aux-refl A B vAB a)
   cast-aux-refl _ _ (v₂Emb P eP Q eQ ePQ) a = tt
   cast-aux-refl _ _ (v₂Π A B vBA P Q vPQ) f b =
     let
@@ -115,6 +175,11 @@ mutual
 
   cast-refl-aux : (A B : SetoidPt U) (vAB : U-view₂ A B) (a : SetoidPt (El A)) → El-eq (A .p-el .U-inU) (B .p-el .U-inU) (a .p-el) (cast-aux-el A B vAB a)
   cast-refl-aux _ _ v₂ℕ a = nateq-refl (a .p-el)
+  cast-refl-aux _ _ (v₂ℚ A B vAB R S eRS) a =
+    let
+      cast : SetoidPt (El A) → SetoidPt (El B)
+      cast a = mkPt (cast-aux-el A B vAB a) (cast-aux-rel A A (A .p-rel) B B (B .p-rel) vAB vAB a a (a .p-rel)) (cast-aux-refl A B vAB a)
+    in mkQuoEq (a .p-el) (cast (a .p-el)) (cast-refl-aux A B vAB (a .p-el)) clo-refl clo-refl
   cast-refl-aux _ _ (v₂Emb P eP Q eQ ePQ) a = ★
   cast-refl-aux _ _ (v₂Π A B vBA P Q vPQ) f a b eab =
     let
@@ -156,6 +221,32 @@ mutual
 
   obseq-trans-aux : (A B : SetoidPt U) (vAB : U-view₂ A B) → ∀ (C : SetoidPt U) (vC : U-view C) a b c → obseq-El A B a b → obseq-El C A c a → obseq-El C B c b
   obseq-trans-aux _ _ v₂ℕ _ vℕ a b c eab eca = nateq-trans eca eab
+  obseq-trans-aux _ _ (v₂ℚ A B vAB R S eRS) _ (vℚ C vC T) a b c eab eca = aux (closure-sym (El A) (R .r-el) r₀)
+    where -- this one is somewhat annoying, we have to case split on whether some equalities (obtained via closure) are reflexivity or not
+      cast : SetoidPt (El A) → SetoidPt (El B)
+      cast a = mkPt (cast-aux-el A B vAB a) (cast-aux-rel A A (A .p-rel) B B (B .p-rel) vAB vAB a a (a .p-rel)) (cast-aux-refl A B vAB a)
+
+      a' = eab .qe-a'
+      b' = eab .qe-b'
+      c' = eca .qe-a'
+      a″ = eca .qe-b'
+      b″ = cast a″
+
+      r₀ : closure (El A) (R .r-el) a' a″
+      r₀ = closure-trans (El A) (R .r-el) (closure-sym (El A) (R .r-el) (eab .qe-a≡a')) (eca .qe-b≡b')
+
+      aux : closure (El A) (R .r-el) a″ a' → obseq-El (ℚᵤ C T) (ℚᵤ B S) c b
+      aux clo-refl = mkQuoEq c' b' (obseq-trans-aux A B vAB C vC a' b' c' (eab .qe-a'≡b') (eca .qe-a'≡b')) (eca .qe-a≡a') (eab .qe-b≡b')
+      aux (clo-cons a‴ .a' x r) =
+        mkQuoEq c' b″ (obseq-trans-aux A B vAB C vC a″ b″ c' (cast-refl-aux A B vAB a″) (eca .qe-a'≡b')) (eca .qe-a≡a')
+                (closure-trans (El B) (S .r-el) (eab .qe-b≡b')
+                               (clo-antisnoc (El B) (S .r-el) (eRS a‴ (cast a‴) (cast-refl-aux A B vAB a‴) a' b' (eab .qe-a'≡b') .fst x)
+                                             (closure-cast A B cast (cast-refl-aux A B vAB) R S eRS a‴ a″ (closure-sym (El A) (R .r-el) r))))
+      aux (clo-anticons a‴ .a' x r) = 
+        mkQuoEq c' b″ (obseq-trans-aux A B vAB C vC a″ b″ c' (cast-refl-aux A B vAB a″) (eca .qe-a'≡b')) (eca .qe-a≡a')
+                (closure-trans (El B) (S .r-el) (eab .qe-b≡b')
+                               ( clo-snoc (El B) (S .r-el) (eRS a' b' (eab .qe-a'≡b') a‴ (cast a‴) (cast-refl-aux A B vAB a‴) .fst x)
+                                          (closure-cast A B cast (cast-refl-aux A B vAB) R S eRS a‴ a″ (closure-sym (El A) (R .r-el) r)) ))
   obseq-trans-aux _ _ (v₂Emb P eP Q eQ ePQ) _ (vEmb P₁ eP₁) a b c eab eca = ★
   obseq-trans-aux _ _ (v₂Π A B vBA P Q vPQ) _ (vΠ C vC R vR) f g h efg ehf c b ecb =
     let
@@ -214,6 +305,17 @@ obseq-trans A B eAB C = obseq-trans-aux A B (U-inview₂ A B eAB) C (U-inview C)
 
 obseq-transU-aux : (A B C : SetoidPt U) (vA : U-view A) (vB : U-view B) (vC : U-view C) (eAB : SetoidEq A B) (eCA : SetoidEq C A) → SetoidEq C B
 obseq-transU-aux _ _ _ vℕ vℕ vℕ eAB eCA = ★₁
+obseq-transU-aux _ _ _ (vℚ A vA R) (vℚ B vB S) (vℚ C vC T) eAB eCA =
+  mkΣ (obseq-transU-aux A B C vA vB vC (eAB .fst) (eCA .fst))
+      (λ c₀ b₀ ecb₀ c₁ b₁ ecb₁ →
+        let
+          a₀ = cast C A (eCA .fst) c₀
+          a₁ = cast C A (eCA .fst) c₁
+          eca₀ = cast-eq C A (eCA .fst) c₀
+          eca₁ = cast-eq C A (eCA .fst) c₁
+          eab₀ = obseq-sym B A b₀ a₀ (obseq-trans C A (eCA .fst) B c₀ a₀ b₀ eca₀ (obseq-sym C B c₀ b₀ ecb₀))
+          eab₁ = obseq-sym B A b₁ a₁ (obseq-trans C A (eCA .fst) B c₁ a₁ b₁ eca₁ (obseq-sym C B c₁ b₁ ecb₁))
+        in equiv-trans (eCA .snd c₀ a₀ eca₀ c₁ a₁ eca₁) (eAB .snd a₀ b₀ eab₀ a₁ b₁ eab₁))
 obseq-transU-aux _ _ _ (vEmb P eP) (vEmb P₁ eP₁) (vEmb P₂ eP₂) eAB eCA = mkLift₁ (equiv-trans (eCA .lift₁) (eAB .lift₁))
 obseq-transU-aux _ _ _ (vΠ A vA P vP) (vΠ B vB Q vQ) (vΠ C vC R vR) e f =
   mkΣ (obseq-transU-aux A B C vA vB vC (e .fst) (f .fst))

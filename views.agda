@@ -3,6 +3,7 @@
 open import Agda.Primitive
 open import lib
 open import setoids
+open import typeformers
 
 module views where
 
@@ -11,6 +12,7 @@ module views where
 
 data U-view : (A : SetoidPt U) → Set₁ where
   vℕ : U-view ℕᵤ
+  vℚ : (A : SetoidPt U) (Av : U-view A) (R : SetoidRelation (El A)) → U-view (ℚᵤ A R)
   vEmb : (P : Set) (eP : Lift₁ (P ↔ P)) → U-view (Embᵤ P eP)
   vΠ : (A : SetoidPt U) (Av : U-view A) (P : SetoidMorphism (El A) U) (vP : (a : SetoidPt (El A)) → U-view (setoidApp P a)) → U-view (Πᵤ A P)
   vΣ : (A : SetoidPt U) (Av : U-view A) (P : SetoidMorphism (El A) U) (vP : (a : SetoidPt (El A)) → U-view (setoidApp P a)) → U-view (Σᵤ A P)
@@ -35,10 +37,19 @@ U-inview-aux Σt Σu Σv (c₃Σ A Au Av Aw P Pu Pv Pw) Σ-rel Σ-refl =
     vP a = U-inview-aux (P a) (Pu a) (Pv a) (Pw a) (Σ-rel .snd a a (a .p-rel)) (Σ-refl .snd a)
   in vΣ ptA vA ptP vP
 U-inview-aux A Au Av c₃ℕ Ax Ay = vℕ
+U-inview-aux Q Qu Qv (c₃ℚ A Au Av Aw R) ℚ-rel ℚ-refl =
+  let
+    ptA = mkPt {X = U} (mkU A Au Av Aw) (ℚ-rel .fst) ℚ-refl
+    vA = U-inview-aux A Au Av Aw (ℚ-rel .fst) ℚ-refl
+    R : SetoidRelation (El ptA)
+    R = mkRelation R (ℚ-rel .snd) tt
+  in vℚ ptA vA R
 U-inview-aux A Au Av (c₃Emb P) Ax Ay = vEmb P Ax --transp (λ X → U-view (mkPt (mkU A (cEmb A) (c₂Emb A) (c₃Emb A)) X tt₁)) (sym Ay) (vEmb P) Ay
 
 U-inview : (A : SetoidPt U) → U-view A
 U-inview (mkPt (mkU A Au Av Aw) A-rel A-refl) = U-inview-aux A Au Av Aw A-rel A-refl
+
+-- now we use views to prove that equality is reflexive
 
 obseq-refl : (A : SetoidPt U) (a : SetoidPt (El A)) → obseq-El A A a a
 obseq-refl A a = a .p-rel
@@ -46,9 +57,12 @@ obseq-refl A a = a .p-rel
 obseq-reflU : (A : SetoidPt U) → SetoidEq A A
 obseq-reflU A = A .p-rel
 
+-- and transitive
+
 obseq-sym-aux : (A : SetoidPt U) (vA : U-view A) (B : SetoidPt U) (vB : U-view B) (a : SetoidPt (El A)) (b : SetoidPt (El B)) → obseq-El A B a b → obseq-El B A b a
 obseq-sym-aux _ vℕ _ vℕ a b e = nateq-sym e
 obseq-sym-aux _ (vEmb P eP) _ (vEmb Q eQ) a b e = ★
+obseq-sym-aux _ (vℚ A vA R) _ (vℚ B vB S) a b e = mkQuoEq (e .qe-b') (e .qe-a') (obseq-sym-aux A vA B vB (e .qe-a') (e .qe-b') (e .qe-a'≡b')) (e .qe-b≡b') (e .qe-a≡a')
 obseq-sym-aux _ (vΠ A vA P vP) _ (vΠ B vB Q vQ) f g efg b a eba =
   obseq-sym-aux (setoidApp P a) (vP a) (setoidApp Q b) (vQ b) (Πᵤ-app A P f a) (Πᵤ-app B Q g b) (efg a b (obseq-sym-aux B vB A vA b a eba)) 
 obseq-sym-aux _ (vΣ A vA P vP) _ (vΣ B vB Q vQ) x y e =
@@ -63,6 +77,8 @@ obseq-sym A B a b = obseq-sym-aux A (U-inview A) B (U-inview B) a b
 
 obseq-symU-aux : (A : SetoidPt U) (vA : U-view A) (B : SetoidPt U) (vB : U-view B) → SetoidEq A B → SetoidEq B A
 obseq-symU-aux _ vℕ _ vℕ e = ★₁
+obseq-symU-aux _ (vℚ A vA R) _ (vℚ B vB S) e =
+  mkΣ (obseq-symU-aux A vA B vB (e .fst)) (λ b₀ a₀ e₀ b₁ a₁ e₁ → equiv-sym (e .snd a₀ b₀ (obseq-sym B A b₀ a₀ e₀) a₁ b₁ (obseq-sym B A b₁ a₁ e₁)))
 obseq-symU-aux _ (vEmb P eP) _ (vEmb Q eQ) e = mkLift₁ (equiv-sym (e .lift₁))
 obseq-symU-aux _ (vΠ A vA P vP) _ (vΠ B vB Q vQ) e =
   mkΣ (obseq-symU-aux A vA B vB (e .fst)) (λ b a eba → obseq-symU-aux (setoidApp P a) (vP a) (setoidApp Q b) (vQ b) (e. snd a b (obseq-sym B A b a eba)))
@@ -76,6 +92,10 @@ obseq-symU A B e = obseq-symU-aux A (U-inview A) B (U-inview B) e
 
 data U-view₂ : (A B : SetoidPt U) → Set₁ where
   v₂ℕ : U-view₂ ℕᵤ ℕᵤ
+  v₂ℚ : (A : SetoidPt U) (B : SetoidPt U) (vAB : U-view₂ A B) (R : SetoidRelation (El A)) (S : SetoidRelation (El B))
+        (eRS : (a₀ : SetoidPt (El A)) (b₀ : SetoidPt (El B)) (e₀ : obseq-El A B a₀ b₀)
+               (a₁ : SetoidPt (El A)) (b₁ : SetoidPt (El B)) (e₁ : obseq-El A B a₁ b₁) → R .r-el a₀ a₁ ↔ S .r-el b₀ b₁)
+       → U-view₂ (ℚᵤ A R) (ℚᵤ B S)
   v₂Emb : (P : Set) (eP : Lift₁ (P ↔ P)) (Q : Set) (eQ : Lift₁ (Q ↔ Q)) (ePQ : Lift₁ (P ↔ Q)) → U-view₂ (Embᵤ P eP) (Embᵤ Q eQ)
   v₂Π : (A : SetoidPt U) (B : SetoidPt U) (vAB : U-view₂ B A)
         (P : SetoidMorphism (El A) U) (Q : SetoidMorphism (El B) U)
@@ -87,6 +107,7 @@ data U-view₂ : (A B : SetoidPt U) → Set₁ where
 
 U-inview₂-aux : (A : SetoidPt U) (vA : U-view A) (B : SetoidPt U) (vB : U-view B) (e : SetoidEq A B) → U-view₂ A B
 U-inview₂-aux A vℕ B vℕ e = v₂ℕ
+U-inview₂-aux _ (vℚ A vA R) _ (vℚ B vB S) e = v₂ℚ A B (U-inview₂-aux A vA B vB (e .fst)) R S (e .snd)
 U-inview₂-aux A (vEmb P eP) B (vEmb Q eQ) e = v₂Emb P eP Q eQ e
 U-inview₂-aux _ (vΠ A vA P vP) _ (vΠ B vB Q vQ) e =
   v₂Π A B (U-inview₂-aux B vB A vA (obseq-symU A B (e .fst))) P Q (λ a b eab → U-inview₂-aux (setoidApp P a) (vP a) (setoidApp Q b) (vQ b) (e .snd a b eab))
