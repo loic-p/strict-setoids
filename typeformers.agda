@@ -205,8 +205,8 @@ correctQuo A R x = mkPt (x .p-el) (mkQuoEq (x .p-el) (x .p-el) (x .p-el .p-rel) 
 
 -- Elimination rule for quotient types
 
--- _∘_ : {ℓ₁ ℓ₂ ℓ₃ : Level} {A : Setoid ℓ₁} {B : Setoid ℓ₂} {C : Setoid ℓ₃} (f : SetoidMorphism B A) (g : SetoidMorphism C B) → SetoidMorphism C A
--- f ∘ g = mkMorphism (λ c → (f .m-el (setoidApp g c))) (λ c₀ c₁ ce → f .m-rel (setoidApp g c₀) (setoidApp g c₁) (g .m-rel c₀ c₁ ce)) (λ c → f .m-refl (setoidApp g c))
+_∘_ : {ℓ₁ ℓ₂ ℓ₃ : Level} {A : Setoid ℓ₁} {B : Setoid ℓ₂} {C : Setoid ℓ₃} (f : SetoidMorphism B A) (g : SetoidMorphism C B) → SetoidMorphism C A
+f ∘ g = mkMorphism (λ c → (f .m-el (setoidApp g c))) (λ c₀ c₁ ce → f .m-rel (setoidApp g c₀) (setoidApp g c₁) (g .m-rel c₀ c₁ ce)) (λ c → f .m-refl (setoidApp g c))
 
 -- ℚᵤ-elim-el : (A : SetoidPt U) (R : SetoidRelation (El A)) (P : SetoidMorphism (El (ℚᵤ A R)) U) (Hq : SetoidPt (El (Πᵤ A (P ∘ ℚᵤ-intro A R))))
 --              (Heq : (a₀ a₁ : SetoidPt (El A)) (ae : R .r-el a₀ a₁)

@@ -61,13 +61,13 @@ fiber A P a .s-el = d-el P a
 fiber A P a .s-rel p q = d-rel P a p a q
 fiber A P a .s-refl p e = d-refl P a p e
 
--- record SetoidSection {ℓ₁ ℓ₂ : Level} (A : Setoid ℓ₁) (P : DepSetoid A ℓ₂) : Set (ℓ₁ ⊔ ℓ₂) where
---   field
---     r-el : (a : SetoidPt A) → d-el P a
---     r-rel : (a b : SetoidPt A) (e : SetoidEq a b) → d-rel P a (r-el a) b (r-el b)
---     r-refl : (a : SetoidPt A) → d-refl P a (r-el a) (r-rel a a (p-rel a))
+record SetoidSection {ℓ₁ ℓ₂ : Level} (A : Setoid ℓ₁) (P : DepSetoid A ℓ₂) : Set (ℓ₁ ⊔ ℓ₂) where
+  field
+    f-el : (a : SetoidPt A) → d-el P a
+    f-rel : (a b : SetoidPt A) (e : SetoidEq a b) → d-rel P a (f-el a) b (f-el b)
+    f-refl : (a : SetoidPt A) → d-refl P a (f-el a) (f-rel a a (p-rel a))
 
--- open SetoidSection public
+open SetoidSection public
 
 record SetoidRelation {ℓ : Level} (A : Setoid ℓ) : Set (lsuc ℓ) where
   constructor mkRelation
