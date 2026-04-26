@@ -6,6 +6,13 @@ open import setoids
 
 module typeformers where
 
+{- In this module, we prove that U is closed under
+   * Natural numbers
+   * Embeddings of propositions
+   * Dependent products
+   * Dependent sums
+   * Quotients -}
+
 -- nat
 
 ℕᵤ : SetoidPt U

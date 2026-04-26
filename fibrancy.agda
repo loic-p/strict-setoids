@@ -8,7 +8,12 @@ open import views
 
 module fibrancy where
 
--- Some lemmas on closures for quotients
+{- In this module, we show that all the setoids in the universe are fibrant.
+   This means that the heterogeneous equality between points of setoids in U is symmetric,
+   transitive, and lets us do transport. We already proved symmetry in [views.agda], so it
+   remains to define transivity and transport -}
+
+{- First, some lemmas on closures for quotients -}
 
 clo-snoc : {ℓ : Level} (A : Setoid ℓ) (R : (a b : SetoidPt A) → Set ℓ) {a b c : SetoidPt A} → R a b → closure A R b c → closure A R a c
 clo-snoc A R r clo-refl = clo-cons _ _ r (clo-refl)
@@ -41,7 +46,7 @@ closure-cast A B cast cast-eq R S eRS a a' (clo-cons b .a' x e) =
 closure-cast A B cast cast-eq R S eRS a a' (clo-anticons b .a' x e) =
   clo-anticons (cast b) (cast a') (eRS a' (cast a') (cast-eq a') b (cast b) (cast-eq b) .fst x) (closure-cast A B cast cast-eq R S eRS a b e)
 
--- Now we can define "fibrancy structures" (that is, cast and transitivity) with a big mutual induction on types
+{- Now we can define "fibrancy structures" (that is, cast and transitivity) with a big mutual induction on U -}
 
 mutual
   cast-aux-el : (A B : SetoidPt U) (vAB : U-view₂ A B) → SetoidPt (El A) → El B .s-el
@@ -273,7 +278,7 @@ mutual
                                             (Σᵤ-snd B Q (correctPair B Q y)) (Σᵤ-snd C R (correctPair C R z)) (exy .snd) (ezx .snd)))
           exy ezx
 
--- cast operator
+{- Now that we have done all of this hard work, we can use it to define a cast operator -}
 
 cast-el : (A B : SetoidPt U) (eAB : SetoidEq A B) → SetoidPt (El A) → El B .s-el
 cast-el A B eAB = cast-aux-el A B (U-inview₂ A B eAB)
@@ -291,17 +296,17 @@ cast-refl A B eAB = cast-aux-refl A B (U-inview₂ A B eAB)
 cast : (A B : SetoidPt U) (eAB : SetoidEq A B) (a : SetoidPt (El A)) → SetoidPt (El B)
 cast A B eAB a = mkPt (cast-el A B eAB a) (cast-rel A A (A .p-rel) B B (B .p-rel) eAB eAB a a (a .p-rel)) (cast-refl A B eAB a)
 
--- cast equality
+{- We have that [a] is always heterogeneously equal to [cast A B e a] -}
 
 cast-eq : (A B : SetoidPt U) (eAB : SetoidEq A B) (a : SetoidPt (El A)) → obseq-El A B a (cast A B eAB a)
 cast-eq A B eAB a = cast-refl-aux A B (U-inview₂ A B eAB) a
 
--- transitivity of observational equality
+{- Transitivity of heterogeneous observational equality -}
 
 obseq-trans : ∀ (A B : SetoidPt U) (eAB : SetoidEq A B) (C : SetoidPt U) a b c → obseq-El A B a b → obseq-El C A c a → obseq-El C B c b
 obseq-trans A B eAB C = obseq-trans-aux A B (U-inview₂ A B eAB) C (U-inview C) 
 
--- transitivity on universe
+{- Transitivity of the equality on U -}
 
 obseq-transU-aux : (A B C : SetoidPt U) (vA : U-view A) (vB : U-view B) (vC : U-view C) (eAB : SetoidEq A B) (eCA : SetoidEq C A) → SetoidEq C B
 obseq-transU-aux _ _ _ vℕ vℕ vℕ eAB eCA = ★₁

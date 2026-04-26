@@ -7,6 +7,7 @@ module lib where
 infix 4 _≡_
 
 record Σ {ℓ₁ ℓ₂ : Level} (A : Set ℓ₁) (P : A → Set ℓ₂) : Set (ℓ₁ ⊔ ℓ₂) where
+  eta-equality
   constructor mkΣ
   field
     fst : A
@@ -23,6 +24,7 @@ record & {ℓ₁ ℓ₂ : Level} (A : Prop ℓ₁) (P : A → Prop ℓ₂) : Pro
 open & public
 
 record Unit : Set where
+  eta-equality
   constructor ★
 
 open Unit public
@@ -31,12 +33,16 @@ record ⊤ : Prop where
   constructor tt
 
 record Unit₁ : Set₁ where
+  eta-equality
   constructor ★₁
 
 open Unit₁ public
 
 record ⊤₁ : Prop₁ where
   constructor tt₁
+
+record ⊤ℓ {ℓ : Level} : Prop ℓ where
+  constructor ttℓ
 
 data Empty : Set where
 
@@ -53,7 +59,8 @@ data ℕ : Set where
 data _≡_ {ℓ : Level} {A : Set ℓ} (a : A) : A → Prop ℓ where
   refl : a ≡ a
 
-record Lift₁ (A : Set) : Set₁ where
+record Lift₁ {ℓ : Level} (A : Set ℓ) : Set (lsuc ℓ) where
+  eta-equality
   constructor mkLift₁
   field
     lift₁ : A
@@ -102,6 +109,13 @@ nateq-sym (nateq-suc e) = nateq-suc (nateq-sym e)
 nateq-trans : {n m l : ℕ} → nateq n m → nateq m l → nateq n l
 nateq-trans nateq-zero e₂ = e₂
 nateq-trans (nateq-suc e₁) (nateq-suc e₂) = nateq-suc (nateq-trans e₁ e₂)
+
+cong : {ℓ : _} {A B : Set ℓ} → (f : A → B) → {a b : A} → (e : a ≡ b) → f a ≡ f b
+cong f refl = refl
+
+nateq→≡ : {n m : ℕ} → nateq n m → n ≡ m
+nateq→≡ nateq-zero = refl
+nateq→≡ (nateq-suc e) = cong suc (nateq→≡ e)
 
 _↔_ : {ℓ₁ ℓ₂ : Level} (P : Set ℓ₁) (Q : Set ℓ₂) → Set (ℓ₁ ⊔ ℓ₂)
 P ↔ Q = Σ (P → Q) (λ _ → Q → P)

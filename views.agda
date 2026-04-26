@@ -7,8 +7,9 @@ open import typeformers
 
 module views where
 
--- Since it is so annoying to do pattern-matching on points in the universe, we
--- associate these "views" to them, which are much easier to pattern-match.
+{- The multi-step definition of U makes it difficult to do pattern matching on its inhabitants.
+   To circumvent this issue, we use the standard trick of "views": every inhabitant of U is
+   in the view, and it is much easier to do pattern-matching on the proof of [U-view x] -}
 
 data U-view : (A : SetoidPt U) → Set₁ where
   vℕ : U-view ℕᵤ
@@ -49,15 +50,15 @@ U-inview-aux A Au Av (c₃Emb P) Ax Ay = vEmb P Ax --transp (λ X → U-view (mk
 U-inview : (A : SetoidPt U) → U-view A
 U-inview (mkPt (mkU A Au Av Aw) A-rel A-refl) = U-inview-aux A Au Av Aw A-rel A-refl
 
--- now we use views to prove that equality is reflexive
+{- Now we can use these views to prove that
+   * the setoid equality between setoids in the universe is reflexive and symmetric
+   * the heterogeneous equality between inhabitants of setoids in the universe is reflexive and symmetric -}
 
 obseq-refl : (A : SetoidPt U) (a : SetoidPt (El A)) → obseq-El A A a a
 obseq-refl A a = a .p-rel
 
 obseq-reflU : (A : SetoidPt U) → SetoidEq A A
 obseq-reflU A = A .p-rel
-
--- and transitive
 
 obseq-sym-aux : (A : SetoidPt U) (vA : U-view A) (B : SetoidPt U) (vB : U-view B) (a : SetoidPt (El A)) (b : SetoidPt (El B)) → obseq-El A B a b → obseq-El B A b a
 obseq-sym-aux _ vℕ _ vℕ a b e = nateq-sym e
@@ -88,7 +89,9 @@ obseq-symU-aux _ (vΣ A vA P vP) _ (vΣ B vB Q vQ) e =
 obseq-symU : (A : SetoidPt U) (B : SetoidPt U) → SetoidEq A B → SetoidEq B A
 obseq-symU A B e = obseq-symU-aux A (U-inview A) B (U-inview B) e
 
--- View for two equal points. Note the contravariance in the domain of Π.
+{- At times, we will also need to do proofs by induction on two equal elements of U.
+   Of course, only the diagonal cases matter: ℕ cannot be equal to a dependent product!
+   To make this type of pattern-matching easier, we define a binary view -}
 
 data U-view₂ : (A B : SetoidPt U) → Set₁ where
   v₂ℕ : U-view₂ ℕᵤ ℕᵤ
