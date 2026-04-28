@@ -9,6 +9,7 @@ open import typeformers
 open import views
 open import fibrancy
 open import cwf
+open import nat
 
 {- In this file we define an observational equality for our CwF. It supports
    - reflexivity, symmetry, transitivity
