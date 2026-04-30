@@ -9,5 +9,6 @@ Revisiting Hofmann's setoid model using PMP's strict presheaves.
 - `cwf.agda`: arranging all the pieces in a category with families. The resulting CwF supports Pi types (with η) and positive Σ types (without η)
 - `nat.agda`: adding natural numbers with large elimination to the CwF. Nat is in its own file because it is quite slow to typecheck.
 - `observational.agda`: adding observational features to the CwF. We define an observational equality which supports funext, propext, UIP. It computes via a cast operator, as in OTT.
+- `choice.agda`: adding choice principles to the CwF. We define propositional truncation, and we derive countable choice
 
-TODO: quotients, choice principles, add a second universe level
+TODO: quotients, unique choice, add a second universe level

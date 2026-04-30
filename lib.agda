@@ -113,6 +113,10 @@ nateq-trans (nateq-suc e₁) (nateq-suc e₂) = nateq-suc (nateq-trans e₁ e₂
 cong : {ℓ : _} {A B : Set ℓ} → (f : A → B) → {a b : A} → (e : a ≡ b) → f a ≡ f b
 cong f refl = refl
 
+nateq-is-hProp : (n m : ℕ) (e₁ e₂ : nateq n m) → e₁ ≡ e₂
+nateq-is-hProp zero zero nateq-zero nateq-zero = refl
+nateq-is-hProp (suc n) (suc m) (nateq-suc e₁) (nateq-suc e₂) = cong nateq-suc (nateq-is-hProp n m e₁ e₂)
+
 nateq→≡ : {n m : ℕ} → nateq n m → n ≡ m
 nateq→≡ nateq-zero = refl
 nateq→≡ (nateq-suc e) = cong suc (nateq→≡ e)
